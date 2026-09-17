@@ -18,6 +18,13 @@ credentials or CLI profiles are mounted only for that child container, and the
 repository is read-only. Santet controls target selection, severity gates, and
 the writable evidence directory; it does not expose Prowler fixers.
 
+The optional local Web UI is a dependency-free Python HTTP service with a
+static browser client. It reads normalized summaries from existing evidence and
+delegates requested work to a fixed CLI allowlist. It never invokes a shell,
+permits only one job at a time, and does not expose cluster-changing commands.
+The UI is a presentation and orchestration layer; CLI policy remains the source
+of truth.
+
 ## Trust boundaries
 
 1. **Repository:** potentially untrusted source and scanner input.
@@ -31,6 +38,9 @@ the writable evidence directory; it does not expose Prowler fixers.
    packages, vulnerabilities, topology, and identities.
 6. **Cloud control plane:** sensitive provider APIs accessed through a dedicated
    read-only workload identity and explicit target selection.
+7. **Local browser:** unauthenticated R&D interface constrained to loopback,
+   same-origin requests, a per-process mutation token, validated command
+   parameters, and evidence-directory path confinement.
 
 ## Data flow
 
@@ -58,6 +68,9 @@ must never receive credentials in untrusted pull-request jobs.
   release.
 - Cloud fixers are unavailable; critical/high failed checks return a blocking
   status while inventory mode remains non-blocking.
+- The local Web UI refuses non-loopback binding and non-local Host headers,
+  rejects concurrent jobs, and excludes destructive or cluster-changing
+  commands from its API.
 
 ## Performance model
 

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#080b10">
+  <title>Santet DevSecOps — Local Security Console</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div><strong>SANTET</strong><small>DEVSECOPS</small></div>
+      </div>
+      <nav class="nav" aria-label="Primary navigation">
+        <button class="nav-item active" data-section="overview"><span class="nav-icon">⌁</span>Overview</button>
+        <button class="nav-item" data-section="workbench"><span class="nav-icon">◇</span>Workbench</button>
+        <button class="nav-item" data-section="cloud"><span class="nav-icon">☁</span>Cloud posture</button>
+        <button class="nav-item" data-section="evidence"><span class="nav-icon">▱</span>Evidence</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="local-card">
+          <span class="pulse"></span>
+          <div><strong>Local R&amp;D</strong><small>No authentication</small></div>
+        </div>
+        <p>Bound to loopback only. Your evidence stays on this machine.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-button menu-button" id="menuButton" aria-label="Open navigation">☰</button>
+        <div class="target-wrap">
+          <span class="eyebrow">SECURITY TARGET</span>
+          <span class="target" id="targetPath">Connecting…</span>
+        </div>
+        <div class="top-actions">
+          <span class="version-pill" id="versionPill">v—</span>
+          <button class="button secondary compact" id="refreshButton">Refresh</button>
+          <button class="button primary compact" data-run="scan">Run baseline</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="view active" data-view="overview">
+          <div class="hero">
+            <div class="hero-copy">
+              <span class="kicker">OPEN-SOURCE SECURITY OPERATIONS</span>
+              <h1>See risk clearly.<br><span>Ship with confidence.</span></h1>
+              <p>One focused console for source, supply chain, container, Kubernetes, and multi-cloud security evidence.</p>
+              <div class="hero-actions">
+                <button class="button primary" data-run="scan">Run full baseline <span>→</span></button>
+                <button class="button secondary" data-section-jump="workbench">Open workbench</button>
+              </div>
+            </div>
+            <div class="posture-orbit" id="postureOrbit">
+              <div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div>
+              <div class="posture-core"><span id="postureScore">—</span><small>POSTURE</small></div>
+              <div class="orbit-label top">CODE</div><div class="orbit-label right">CLOUD</div>
+              <div class="orbit-label bottom">RUNTIME</div><div class="orbit-label left">SUPPLY</div>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card critical"><div class="metric-head"><span>Blocking risk</span><i>↗</i></div><strong id="blockingCount">—</strong><small>Critical, high &amp; dependencies</small></article>
+            <article class="metric-card"><div class="metric-head"><span>Evidence</span><i>▱</i></div><strong id="artifactCount">—</strong><small>Local security artifacts</small></article>
+            <article class="metric-card"><div class="metric-head"><span>SBOM components</span><i>⌬</i></div><strong id="componentCount">—</strong><small>Tracked software inventory</small></article>
+            <article class="metric-card"><div class="metric-head"><span>Cloud coverage</span><i>☁</i></div><strong>4</strong><small>AWS · Azure · GCP · Alibaba</small></article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="panel risk-panel">
+              <div class="panel-header"><div><span class="eyebrow">FINDING DISTRIBUTION</span><h2>Risk signal</h2></div><span class="freshness" id="freshness">No evidence yet</span></div>
+              <div class="risk-chart">
+                <div class="bars" id="severityBars"></div>
+                <div class="risk-total"><strong id="findingTotal">0</strong><span>total findings</span></div>
+              </div>
+              <div class="legend"><span><i class="dot critical-dot"></i>Critical</span><span><i class="dot high-dot"></i>High</span><span><i class="dot medium-dot"></i>Medium</span><span><i class="dot low-dot"></i>Low</span></div>
+            </article>
+
+            <article class="panel coverage-panel">
+              <div class="panel-header"><div><span class="eyebrow">CONTROL PLANE</span><h2>Coverage</h2></div><span class="status-badge success">9 engines</span></div>
+              <div class="coverage-list">
+                <div><span class="coverage-icon violet">{ }</span><p><strong>Application</strong><small>Secrets · SAST · Dependencies</small></p><b>Active</b></div>
+                <div><span class="coverage-icon cyan">⬡</span><p><strong>Cloud native</strong><small>Container · IaC · Kubernetes</small></p><b>Active</b></div>
+                <div><span class="coverage-icon green">⌁</span><p><strong>Multi-cloud</strong><small>AWS · Azure · GCP · Alibaba</small></p><b>Ready</b></div>
+                <div><span class="coverage-icon orange">◉</span><p><strong>Runtime</strong><small>KubeArmor · KubeHound</small></p><b>Host</b></div>
+              </div>
+            </article>
+          </div>
+
+          <article class="panel recent-panel">
+            <div class="panel-header"><div><span class="eyebrow">RECENT OUTPUT</span><h2>Latest evidence</h2></div><button class="text-button" data-section-jump="evidence">View all →</button></div>
+            <div class="evidence-list" id="recentEvidence"><div class="empty-state">Run a scan to create local evidence.</div></div>
+          </article>
+        </section>
+
+        <section class="view" data-view="workbench">
+          <div class="page-heading"><div><span class="kicker">SCANNER WORKBENCH</span><h1>Run focused checks.</h1><p>Every action maps to an allowlisted Santet CLI command. No arbitrary shell execution.</p></div><button class="button primary" data-run="scan">Run full baseline</button></div>
+          <div class="tool-grid" id="toolGrid">
+            <button class="tool-card" data-run="secrets"><span class="tool-icon violet">⌕</span><div><strong>Secret detection</strong><small>Git history and working tree</small></div><i>→</i></button>
+            <button class="tool-card" data-run="sast"><span class="tool-icon blue">{ }</span><div><strong>Static analysis</strong><small>Semgrep secure coding rules</small></div><i>→</i></button>
+            <button class="tool-card" data-run="dependencies"><span class="tool-icon green">⬡</span><div><strong>Dependencies</strong><small>Known vulnerable packages</small></div><i>→</i></button>
+            <button class="tool-card" data-run="filesystem"><span class="tool-icon orange">▰</span><div><strong>Filesystem &amp; IaC</strong><small>Vulnerabilities and misconfigurations</small></div><i>→</i></button>
+            <button class="tool-card" data-run="kube-lint"><span class="tool-icon cyan">⎈</span><div><strong>Kubernetes lint</strong><small>Manifest and Helm security</small></div><i>→</i></button>
+            <button class="tool-card" data-run="sbom"><span class="tool-icon pink">▱</span><div><strong>Generate SBOM</strong><small>CycloneDX and SPDX inventory</small></div><i>→</i></button>
+          </div>
+          <div class="dashboard-grid workbench-lower">
+            <article class="panel image-panel">
+              <div class="panel-header"><div><span class="eyebrow">CONTAINER SECURITY</span><h2>Scan an image</h2></div></div>
+              <label class="field-label" for="imageInput">Image reference</label>
+              <div class="input-action"><input id="imageInput" placeholder="ghcr.io/org/app:1.0.0" autocomplete="off"><button class="button primary" id="imageScanButton">Scan image</button></div>
+              <p class="field-help">The image must be accessible to the local Docker daemon.</p>
+            </article>
+            <article class="panel system-panel">
+              <div class="panel-header"><div><span class="eyebrow">READINESS</span><h2>Environment</h2></div></div>
+              <div class="system-actions"><button class="button secondary" data-run="doctor">Repository doctor</button><button class="button secondary" data-run="cluster-doctor">Cluster doctor</button><button class="button secondary" data-run="cloud-validate">Validate cloud policy</button></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" data-view="cloud">
+          <div class="page-heading"><div><span class="kicker">MULTI-CLOUD POSTURE</span><h1>One policy. Four clouds.</h1><p>Read-only inventory and critical/high gates through the hardened, digest-pinned runtime.</p></div></div>
+          <div class="cloud-controls panel">
+            <label><span>Environment label</span><input id="cloudTarget" value="local-rnd" maxlength="64"></label>
+            <div class="control-note"><span class="shield">◇</span><p><strong>Safe by default</strong><small>No fixer or unrestricted argument pass-through.</small></p></div>
+          </div>
+          <div class="provider-grid">
+            <article class="provider-card aws"><div class="provider-symbol">AWS</div><span class="status-badge">Ready</span><h2>Amazon Web Services</h2><p>IAM, exposure, logging, encryption, network and service posture.</p><div><button class="button secondary" data-cloud="aws" data-mode="cloud-doctor">Doctor</button><button class="button primary" data-cloud="aws" data-mode="cloud-inventory">Inventory</button></div></article>
+            <article class="provider-card azure"><div class="provider-symbol">AZ</div><span class="status-badge">Ready</span><h2>Microsoft Azure</h2><p>Subscriptions, identity, Defender, storage and network controls.</p><div><button class="button secondary" data-cloud="azure" data-mode="cloud-doctor">Doctor</button><button class="button primary" data-cloud="azure" data-mode="cloud-inventory">Inventory</button></div></article>
+            <article class="provider-card gcp"><div class="provider-symbol">GCP</div><span class="status-badge">Ready</span><h2>Google Cloud</h2><p>Projects, organizations, IAM, GKE, storage and audit coverage.</p><div><button class="button secondary" data-cloud="gcp" data-mode="cloud-doctor">Doctor</button><button class="button primary" data-cloud="gcp" data-mode="cloud-inventory">Inventory</button></div></article>
+            <article class="provider-card alibaba"><div class="provider-symbol">ALI</div><span class="status-badge">Ready</span><h2>Alibaba Cloud</h2><p>RAM, ECS, OSS, Security Center, ActionTrail and VPC posture.</p><div><button class="button secondary" data-cloud="alibabacloud" data-mode="cloud-doctor">Doctor</button><button class="button primary" data-cloud="alibabacloud" data-mode="cloud-inventory">Inventory</button></div></article>
+          </div>
+          <article class="panel gate-panel"><div><span class="eyebrow">ENFORCEMENT</span><h2>Critical/high cloud gate</h2><p>Run all providers sequentially to keep API bursts and local memory bounded.</p></div><button class="button danger" id="cloudGateButton">Run all cloud gates</button></article>
+        </section>
+
+        <section class="view" data-view="evidence">
+          <div class="page-heading"><div><span class="kicker">LOCAL EVIDENCE</span><h1>Auditable by design.</h1><p>Reports stay under <code>artifacts/security/</code> and can be downloaded for review or CI retention.</p></div><button class="button secondary" id="evidenceRefresh">Refresh evidence</button></div>
+          <article class="panel evidence-panel"><div class="evidence-toolbar"><input id="evidenceSearch" placeholder="Filter evidence…"><span id="evidenceCount">0 files</span></div><div class="evidence-table-wrap"><table><thead><tr><th>Artifact</th><th>Type</th><th>Size</th><th>Updated</th><th></th></tr></thead><tbody id="evidenceTable"></tbody></table></div></article>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="job-drawer" id="jobDrawer" aria-live="polite" aria-hidden="true" inert>
+    <div class="job-drawer-head"><div><span class="job-state" id="jobState"><i></i>Running</span><strong id="jobTitle">Security scan</strong></div><div><button class="text-button danger-text" id="cancelJob">Cancel</button><button class="icon-button" id="closeJob" aria-label="Close job output">×</button></div></div>
+    <pre id="jobLog">Preparing secure execution…</pre>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

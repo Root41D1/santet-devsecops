@@ -87,14 +87,14 @@ versioned Santet container.
 2. Pull the versioned release image:
 
    ```bash
-   docker pull ghcr.io/root41d1/santet-devsecops:0.2.1
+   docker pull ghcr.io/root41d1/santet-devsecops:0.3.0
    ```
 
 3. Download and inspect the matching wrapper:
 
    ```bash
    curl -fsSLo santet-docker \
-     https://raw.githubusercontent.com/Root41D1/santet-devsecops/v0.2.1/docker/santet
+     https://raw.githubusercontent.com/Root41D1/santet-devsecops/v0.3.0/docker/santet
    less santet-docker
    chmod 0755 santet-docker
    ```
@@ -110,7 +110,7 @@ versioned Santet container.
 5. Pin the container version and verify the installation:
 
    ```bash
-   export SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.2.1
+   export SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.3.0
    santet help
    santet doctor
    ```
@@ -140,7 +140,7 @@ Repository scans are containerized, so cloning Santet is enough when Git,
 Docker, and Make are already available:
 
 ```bash
-git clone --branch v0.2.1 --depth 1 \
+git clone --branch v0.3.0 --depth 1 \
   https://github.com/Root41D1/santet-devsecops.git
 cd santet-devsecops
 make doctor
@@ -177,6 +177,38 @@ docker compose run --rm santet scan
 
 On Docker Desktop, use `SANTET_DOCKER_GID=0`, or prefer the wrapper because it
 detects the active Unix socket automatically.
+
+## Local Web UI (R&D)
+
+Santet includes an optional Web UI with a Python standard-library backend and a
+dependency-free frontend for local security work. It does not replace the CLI:
+every action delegates to an allowlisted Santet command, and all evidence stays
+under the target project's `artifacts/security/` directory.
+
+From a source checkout, run:
+
+```bash
+make web
+```
+
+Open <http://127.0.0.1:7777>. The dashboard provides:
+
+- security posture and finding summaries from existing evidence;
+- full and focused repository scans with live output;
+- container image scanning and SBOM visibility;
+- AWS, Azure, GCP, and Alibaba Cloud inventory/gate workflows; and
+- searchable, downloadable local evidence.
+
+Authentication is intentionally disabled during local R&D. The server binds to
+loopback by default and must not be exposed through a public interface, tunnel,
+reverse proxy, or shared load balancer. See the [Web UI Guide](docs/WEB-UI.md)
+for the security model, custom targets, ports, and cloud credential setup.
+
+To assess another local project:
+
+```bash
+python3 web/server.py --target /absolute/path/to/project
+```
 
 ## First scans
 
@@ -275,6 +307,8 @@ require locally reviewed kubeconfig and dedicated cluster clients.
 ```text
 make doctor                   Check repository-scan prerequisites
 make test                     Test CLI safety and argument contracts
+make web                      Start the local Web UI on 127.0.0.1:7777
+make web-test                 Test Web UI API and safety contracts
 make secrets                  Scan Git history and files for secrets
 make sast                     Run static application security testing
 make dependencies             Scan dependency manifests and lockfiles
@@ -399,6 +433,8 @@ Live KubeHound and KubeArmor operations are intentionally not part of PR CI.
 | `Dockerfile` | Reproducible, non-root Santet distribution image |
 | `docker/santet` | macOS/Linux Docker wrapper |
 | `compose.yaml` | Contributor-oriented Docker Compose runner |
+| `web/server.py` | Local-only, allowlisted Web UI API and job runner |
+| `web/static/` | Dependency-free dark-mode dashboard |
 | `kubernetes/kubearmor/values.yaml` | Pinned KubeArmor operator deployment |
 | `kubernetes/kubearmor/config.yaml` | Audit-first runtime and pinned engine images |
 | `kubernetes/kubearmor/audit-sensitive-runtime.yaml` | Audit-first runtime policy |
@@ -414,8 +450,10 @@ K8S_PATHS="platform/base platform/overlays/prod" make kube-lint
 ```text
 Developer / CI
       |
-      v
-  ./santet ---------------------> artifacts/security/
+      +-- browser --> localhost Web UI -- allowlist --+
+      |                                             |
+      v                                             v
+  ./santet --------------------------------> artifacts/security/
       |                                  |
       +-- source and dependency scans    +-- SARIF / JSON
       +-- Kubernetes lint                +-- CycloneDX / SPDX
@@ -433,7 +471,8 @@ Developer / CI
                                Prowler evidence
 ```
 
-See [Architecture](docs/ARCHITECTURE.md), [Multi-cloud Security](docs/MULTICLOUD.md),
+See [Architecture](docs/ARCHITECTURE.md), [Web UI](docs/WEB-UI.md),
+[Multi-cloud Security](docs/MULTICLOUD.md),
 [Kubernetes Security](docs/KUBERNETES-SECURITY.md), and the
 [Operating Guide](docs/OPERATING-GUIDE.md) for deeper guidance. Maintainers can
 use the [Publishing Guide](docs/PUBLISHING.md) for the first GitHub release.

@@ -4,6 +4,18 @@ All notable changes to Santet DevSecOps are documented here.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-17
+
+### Added
+
+- Elegant responsive dark-mode Web UI for local DevSecOps R&D.
+- Security overview, focused scanner workbench, multi-cloud posture workflows,
+  live job output, cancellation, and searchable evidence downloads.
+- Python standard-library local API and dependency-free frontend with direct
+  CLI delegation, a fixed command allowlist, one-job execution, CSRF token,
+  loopback binding, validated inputs, and artifact path confinement.
+- Web UI safety-contract tests and local operating guide.
+
 ## [0.2.1] - 2026-09-17
 
 ### Fixed

@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: help test doctor secrets sast dependencies filesystem sbom kube-lint scan image-scan \
+.PHONY: help test web web-test doctor secrets sast dependencies filesystem sbom kube-lint scan image-scan \
 	docker-build docker-smoke \
 	prowler-build prowler-smoke \
 	cluster-doctor kubearmor-probe kubearmor-policy-check kubearmor-render \
@@ -16,6 +16,13 @@ help:
 
 test:
 	@tests/test-cloud-cli.sh
+	@python3 -m unittest tests/test_web_ui.py
+
+web:
+	@python3 web/server.py --target "$(CURDIR)"
+
+web-test:
+	@python3 -m unittest tests/test_web_ui.py
 
 doctor:
 	@./santet doctor
