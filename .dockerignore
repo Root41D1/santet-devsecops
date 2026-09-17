@@ -4,7 +4,9 @@ artifacts
 .DS_Store
 .env
 .env.*
-docs
+docs/*
+!docs/MULTICLOUD.md
+!docker/prowler/Dockerfile
 CHANGELOG.md
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md

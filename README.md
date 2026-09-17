@@ -1,7 +1,7 @@
 # Santet DevSecOps
 
-> Free, open-source security automation for code, containers, infrastructure,
-> and Kubernetes—from pull request to runtime.
+> Free, open-source security automation for code, containers, Kubernetes, and
+> AWS, Azure, Google Cloud, and Alibaba Cloud—from pull request to runtime.
 
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Shell: POSIX](https://img.shields.io/badge/shell-POSIX-4EAA25.svg)](scripts/santet.sh)
@@ -22,6 +22,10 @@ paths before they become real incidents.
 - **Defense across the lifecycle:** secrets, SAST, dependencies, IaC,
   Kubernetes manifests, container images, SBOMs, attack paths, and runtime
   enforcement.
+- **One multi-cloud control plane:** pinned, read-only assessment for AWS,
+  Azure, GCP, and Alibaba Cloud with consistent evidence and failure policy.
+- **Reduced cloud runtime:** provider-irrelevant PowerShell, embedded image
+  scanning, and test credentials are removed before vulnerability gating.
 - **Safe cluster access:** every live-cluster command requires an exact context
   name and an explicit read or write opt-in.
 - **Low-noise defaults:** KubeLinter uses a curated security profile instead of
@@ -43,6 +47,7 @@ paths before they become real incidents.
 | Software bill of materials | Syft | Local + CI | CycloneDX + SPDX |
 | Kubernetes attack-path analysis | KubeHound | Controlled cluster assessment | Local graph |
 | Runtime security enforcement | KubeArmor | Kubernetes runtime | Alerts + policy enforcement |
+| Multi-cloud posture and compliance | Prowler | AWS, Azure, GCP, Alibaba Cloud | CSV + JSON-OCSF + HTML + SARIF |
 
 ## Quick start
 
@@ -87,6 +92,28 @@ make scan
 
 Reports are written to `artifacts/security/`.
 
+### Scan a cloud environment
+
+Cloud assessment is read-only and intentionally separate from pull-request
+scanning. Start by checking the selected provider and credential source:
+
+```bash
+make cloud-validate
+make cloud-doctor CLOUD_PROVIDER=aws
+SANTET_CLOUD_TARGET=production make cloud-scan CLOUD_PROVIDER=aws
+```
+
+Use `cloud-inventory` for a non-blocking report across every severity:
+
+```bash
+SANTET_CLOUD_TARGET=production make cloud-inventory CLOUD_PROVIDER=aws
+```
+
+AWS, Azure, GCP, and Alibaba Cloud are supported. See the
+[Multi-cloud Security Guide](docs/MULTICLOUD.md) for temporary identity,
+multi-account targeting, compliance frameworks, Docker credential profiles,
+and CI safety.
+
 You can also invoke the CLI directly:
 
 ```bash
@@ -114,18 +141,18 @@ SANTET_IMAGE=santet-devsecops:local ./docker/santet scan
 After an official release is published, use the multi-architecture GHCR image:
 
 ```bash
-docker pull ghcr.io/root41d1/santet-devsecops:0.1.0
-SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.1.0 ./docker/santet scan
+docker pull ghcr.io/root41d1/santet-devsecops:0.2.0
+SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.2.0 ./docker/santet scan
 ```
 
 To install only the lightweight wrapper into your local path:
 
 ```bash
 curl -fsSLo santet-docker \
-  https://raw.githubusercontent.com/Root41D1/santet-devsecops/v0.1.0/docker/santet
+  https://raw.githubusercontent.com/Root41D1/santet-devsecops/v0.2.0/docker/santet
 chmod 0755 santet-docker
 install -m 0755 santet-docker "$HOME/.local/bin/santet"
-SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.1.0 santet scan
+SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.2.0 santet scan
 ```
 
 Inspect the downloaded wrapper before installing it. Pin both the wrapper URL
@@ -162,6 +189,7 @@ detects the correct socket mapping automatically.
 
 ```text
 make doctor                   Check repository-scan prerequisites
+make test                     Test CLI safety and argument contracts
 make secrets                  Scan Git history and files for secrets
 make sast                     Run static application security testing
 make dependencies             Scan dependency manifests and lockfiles
@@ -172,7 +200,14 @@ make scan                     Run the complete pull-request baseline
 make image-scan               Scan IMAGE and generate its SBOM
 make docker-build             Build the local Santet container image
 make docker-smoke             Build and smoke-test Docker distribution
+make prowler-build            Build the hardened four-cloud Prowler runtime
+make prowler-smoke            Validate the hardened Prowler runtime offline
 make cluster-doctor           Check Kubernetes tools, versions, and context
+make cloud-validate           Validate pinned multi-cloud policy
+make cloud-doctor             Check CLOUD_PROVIDER credentials and runtime
+make cloud-list               List checks/services/compliance for a provider
+make cloud-scan               Gate critical/high live-cloud findings
+make cloud-inventory          Generate non-blocking all-severity cloud evidence
 make kubearmor-render         Render the pinned KubeArmor chart locally
 make kubearmor-install        Install KubeArmor into the confirmed context
 make kubearmor-status         Show KubeArmor runtime health
@@ -272,6 +307,7 @@ Live KubeHound and KubeArmor operations are intentionally not part of PR CI.
 |---|---|
 | `.santet/policy.env` | Approved versions and severity thresholds |
 | `.santet/kubehound.yaml` | KubeHound collection and graph-performance profile |
+| `.santet/cloud.env.example` | Non-secret multi-cloud selection template |
 | `.santet/.gitleaks.toml` | Secret-scanning policy |
 | `.kube-linter.yaml` | Curated Kubernetes security checks |
 | `.semgrep.yml` | Repository-specific static-analysis rules |
@@ -305,9 +341,14 @@ Developer / CI
                                       v          v
                                   KubeHound   KubeArmor
                                   attack graph runtime audit/block
+      |
+      +-- read-only identity ----> AWS / Azure / GCP / Alibaba
+                                      |
+                                      v
+                               Prowler evidence
 ```
 
-See [Architecture](docs/ARCHITECTURE.md),
+See [Architecture](docs/ARCHITECTURE.md), [Multi-cloud Security](docs/MULTICLOUD.md),
 [Kubernetes Security](docs/KUBERNETES-SECURITY.md), and the
 [Operating Guide](docs/OPERATING-GUIDE.md) for deeper guidance. Maintainers can
 use the [Publishing Guide](docs/PUBLISHING.md) for the first GitHub release.
@@ -339,6 +380,6 @@ incident-response program.
 ## License and upstream projects
 
 Santet DevSecOps is licensed under [Apache License 2.0](LICENSE). Gitleaks,
-Semgrep, OSV-Scanner, Trivy, Syft, KubeLinter, KubeHound, and KubeArmor are
+Semgrep, OSV-Scanner, Trivy, Syft, KubeLinter, KubeHound, KubeArmor, and Prowler are
 independent upstream projects governed by their own licenses and maintainers.
 Santet is not an official distribution of those projects.

@@ -4,6 +4,18 @@ All notable changes to Santet DevSecOps are documented here.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-17
+
+### Added
+
+- Read-only AWS, Azure, Google Cloud, and Alibaba Cloud assessment through a
+  digest-pinned and minimized Prowler 5.42.0 runtime.
+- Blocking critical/high cloud security gate and non-blocking full inventory.
+- CSV, JSON-OCSF, HTML, and SARIF evidence partitioned by provider and target.
+- Credential-source doctor, provider catalog commands, temporary-identity
+  support, metadata opt-in, and Docker credential forwarding.
+- Multi-cloud architecture, authentication, CI, baseline, and operating guide.
+
 ## [0.1.0] - 2026-09-17
 
 ### Added

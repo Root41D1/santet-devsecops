@@ -6,7 +6,7 @@ services:
     build:
       context: .
       args:
-        SANTET_VERSION: ${SANTET_VERSION:-0.1.0}
+        SANTET_VERSION: ${SANTET_VERSION:-0.2.0}
     working_dir: /workspace
     user: ${SANTET_UID:-65532}:${SANTET_GID:-65532}
     group_add:

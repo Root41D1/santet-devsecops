@@ -13,6 +13,11 @@ scanner images through the host Docker socket. The target project is mounted at
 the same absolute host/container path so nested scanner bind mounts resolve
 correctly with Docker-outside-of-Docker.
 
+Live cloud assessment delegates to a digest-pinned Prowler container. Provider
+credentials or CLI profiles are mounted only for that child container, and the
+repository is read-only. Santet controls target selection, severity gates, and
+the writable evidence directory; it does not expose Prowler fixers.
+
 ## Trust boundaries
 
 1. **Repository:** potentially untrusted source and scanner input.
@@ -24,6 +29,8 @@ correctly with Docker-outside-of-Docker.
    explicit read/write gates.
 5. **Evidence directory:** reports and cluster dumps that may reveal code,
    packages, vulnerabilities, topology, and identities.
+6. **Cloud control plane:** sensitive provider APIs accessed through a dedicated
+   read-only workload identity and explicit target selection.
 
 ## Data flow
 
@@ -35,6 +42,10 @@ KubeHound reads Kubernetes and RBAC resources and writes a local attack graph.
 KubeArmor runs on cluster nodes and emits runtime telemetry through its relay.
 Neither is invoked by pull-request CI.
 
+Cloud scans query live provider APIs and write CSV, JSON-OCSF, HTML, and SARIF
+under a provider/target boundary. They are scheduled or manually dispatched and
+must never receive credentials in untrusted pull-request jobs.
+
 ## Failure behavior
 
 - Scanner findings produce a non-zero exit according to policy.
@@ -45,6 +56,8 @@ Neither is invoked by pull-request CI.
   required Linux kernel security modules are not available to KubeArmor.
 - KubeArmor installation uses Helm `--atomic` and `--wait` to roll back a failed
   release.
+- Cloud fixers are unavailable; critical/high failed checks return a blocking
+  status while inventory mode remains non-blocking.
 
 ## Performance model
 

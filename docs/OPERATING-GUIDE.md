@@ -60,10 +60,14 @@
 | Image scan | If built | Required | Policy threshold exceeded |
 | Signature/provenance | No | Required | Missing or unverifiable |
 | DAST | Preview/staging | Required for exposed apps | Confirmed high/critical issue |
+| Cloud posture | Scheduled + release | Required for cloud production | Critical/high live misconfiguration |
 
 Live-cluster controls are deliberately separate from pull-request CI. Run
 KubeHound on a scheduled assessment cadence and continuously operate KubeArmor
 with audit-first, canary-tested enforcement. See `docs/KUBERNETES-SECURITY.md`.
+
+Live-cloud controls are also separate from untrusted pull-request CI. Use
+short-lived read-only identities and follow `docs/MULTICLOUD.md`.
 
 Apply gates to new findings first. Baseline legacy findings with owners and due
 dates instead of hiding them.

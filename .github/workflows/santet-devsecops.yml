@@ -32,10 +32,13 @@ jobs:
       - name: Validate Santet CLI
         run: |
           sh -n scripts/santet.sh
+          sh -n docker/santet
           sh -n santet
           test -x santet
           test -x scripts/santet.sh
           make help
+          make cloud-validate
+          make test
 
       - name: Build and smoke-test Santet container
         run: make docker-smoke
