@@ -57,6 +57,9 @@ docker_run_online() {
 
 prepare() {
   mkdir -p "$REPORT_DIR"
+  # Scanner images use different non-root UIDs. A sticky report directory lets
+  # each container write its own result without granting write access elsewhere.
+  chmod 1777 "$REPORT_DIR"
 }
 
 doctor() {

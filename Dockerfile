@@ -4,6 +4,7 @@ ARG SANTET_VERSION=0.1.0
 
 LABEL org.opencontainers.image.title="Santet DevSecOps" \
       org.opencontainers.image.description="Open-source DevSecOps security automation for source code, containers, and Kubernetes" \
+      org.opencontainers.image.source="https://github.com/Root41D1/santet-devsecops" \
       org.opencontainers.image.version="${SANTET_VERSION}" \
       org.opencontainers.image.licenses="Apache-2.0"
 
