@@ -1,0 +1,13 @@
+rules:
+  - id: generic-shell-command-injection
+    languages: [generic]
+    message: User-controlled data must not be interpolated into shell commands.
+    severity: ERROR
+    patterns:
+      - pattern-regex: '(exec|system|popen)\s*\([^\n]*(request|query|params|argv|input)'
+    paths:
+      include:
+        - "*.py"
+        - "*.js"
+        - "*.ts"
+

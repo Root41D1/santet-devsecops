@@ -1,0 +1,5 @@
+artifacts/security/
+.env
+.env.*
+!.env.example
+
