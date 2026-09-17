@@ -19,7 +19,8 @@ Santet applies these defaults:
   read-only;
 - only the provider-specific evidence directory is writable;
 - the upstream Prowler image is pinned by version and multi-architecture
-  digest, then reduced to a dedicated four-cloud runtime;
+  digest, then reduced to a dedicated four-cloud runtime whose published manifest is
+  also pinned by digest in the Santet policy;
 - fixers and automatic remediation are not exposed;
 - metadata-based identity requires `SANTET_CLOUD_ALLOW_METADATA=true`;
 - `cloud-scan` blocks on failed critical/high checks; and
