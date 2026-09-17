@@ -49,15 +49,17 @@ paths before they become real incidents.
 | Runtime security enforcement | KubeArmor | Kubernetes runtime | Alerts + policy enforcement |
 | Multi-cloud posture and compliance | Prowler | AWS, Azure, GCP, Alibaba Cloud | CSV + JSON-OCSF + HTML + SARIF |
 
-## Quick start
+## Installation
 
 ### Prerequisites
 
-Repository scans require:
+Choose one of the installation methods below. Docker is recommended for most
+users because scanner versions and their dependencies are already pinned in the
+published image.
 
-- Git
-- Docker with a running daemon
-- Make
+The recommended Docker installation requires Docker Engine or Docker Desktop
+with a running daemon, plus `curl`. The source installation additionally
+requires Git and Make.
 
 Cluster assessment additionally requires:
 
@@ -65,17 +67,84 @@ Cluster assessment additionally requires:
 - Helm 3
 - KubeHound 1.6.7
 - `karmor` CLI 1.4.7
-- Docker Compose v2
+- Docker Compose v2 for KubeHound
 
-### Install
+Windows users should run the Docker workflow from WSL2. The lightweight wrapper
+currently supports macOS and Linux shells.
+
+### Option A: install with Docker (recommended)
+
+This method does not require cloning the Santet repository. It installs a small
+wrapper that mounts the current project and the active Docker socket into the
+versioned Santet container.
+
+1. Confirm that Docker is running:
+
+   ```bash
+   docker version
+   ```
+
+2. Pull the versioned release image:
+
+   ```bash
+   docker pull ghcr.io/root41d1/santet-devsecops:0.2.1
+   ```
+
+3. Download and inspect the matching wrapper:
+
+   ```bash
+   curl -fsSLo santet-docker \
+     https://raw.githubusercontent.com/Root41D1/santet-devsecops/v0.2.1/docker/santet
+   less santet-docker
+   chmod 0755 santet-docker
+   ```
+
+4. Install it on your local path:
+
+   ```bash
+   mkdir -p "$HOME/.local/bin"
+   install -m 0755 santet-docker "$HOME/.local/bin/santet"
+   export PATH="$HOME/.local/bin:$PATH"
+   ```
+
+5. Pin the container version and verify the installation:
+
+   ```bash
+   export SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.2.1
+   santet help
+   santet doctor
+   ```
+
+   Set `SANTET_IMAGE` in CI or your shell profile if you want the selection to
+   persist. Keep the wrapper and image on the same release version.
+
+6. Enter the project you want to assess and run the baseline:
+
+   ```bash
+   cd /absolute/path/to/your-project
+   santet scan
+   ```
+
+Reports are written to `artifacts/security/` in the assessed project. The
+wrapper always scans the current directory unless `SANTET_TARGET_DIR` is set.
+
+> [!WARNING]
+> The wrapper mounts the Docker daemon socket. Access to that socket is
+> security-sensitive and effectively has high privilege on the Docker host.
+> Use only trusted, version-pinned Santet images and inspect the wrapper before
+> installing it.
+
+### Option B: clone and run from source
 
 Repository scans are containerized, so cloning Santet is enough when Git,
 Docker, and Make are already available:
 
 ```bash
-git clone https://github.com/Root41D1/santet-devsecops.git
+git clone --branch v0.2.1 --depth 1 \
+  https://github.com/Root41D1/santet-devsecops.git
 cd santet-devsecops
 make doctor
+make scan
 ```
 
 For cluster features, install the exact approved versions from the official
@@ -84,32 +153,85 @@ and [karmor v1.4.7 release](https://github.com/kubearmor/kubearmor-client/releas
 then run `make cluster-doctor`. On macOS, KubeHound is also available with
 `brew install kubehound`.
 
-### Run the repository baseline
+### Option C: build the container locally
+
+Use this path when developing Santet or reviewing changes before publication:
 
 ```bash
+git clone https://github.com/Root41D1/santet-devsecops.git
+cd santet-devsecops
+make docker-smoke
+SANTET_IMAGE=santet-devsecops:local ./docker/santet scan
+```
+
+### Docker Compose
+
+Docker Compose is intended for contributors:
+
+```bash
+export SANTET_UID="$(id -u)"
+export SANTET_GID="$(id -g)"
+export SANTET_DOCKER_GID="$(stat -c '%g' /var/run/docker.sock)" # Linux
+docker compose run --rm santet scan
+```
+
+On Docker Desktop, use `SANTET_DOCKER_GID=0`, or prefer the wrapper because it
+detects the active Unix socket automatically.
+
+## First scans
+
+### Scan a repository
+
+With the Docker installation:
+
+```bash
+cd /absolute/path/to/your-project
+santet doctor
+santet scan
+```
+
+With a source checkout:
+
+```bash
+make doctor
 make scan
 ```
 
-Reports are written to `artifacts/security/`.
+Both commands generate reports under `artifacts/security/`.
 
 ### Scan a cloud environment
 
 Cloud assessment is read-only and intentionally separate from pull-request
 scanning. Start by checking the selected provider and credential source:
 
+With the Docker installation and a local AWS profile:
+
+```bash
+export SANTET_CLOUD_CREDENTIAL_DIR="$HOME/.aws"
+export SANTET_AWS_PROFILE=audit
+export SANTET_CLOUD_TARGET=production
+
+santet cloud-validate
+santet cloud-doctor aws
+santet cloud-inventory aws
+santet cloud-scan aws
+```
+
+The credential directory is mounted read-only. Use an audit-only profile and
+prefer temporary workload identity over long-lived keys.
+
+With a source checkout:
+
 ```bash
 make cloud-validate
 make cloud-doctor CLOUD_PROVIDER=aws
+SANTET_CLOUD_TARGET=production make cloud-inventory CLOUD_PROVIDER=aws
 SANTET_CLOUD_TARGET=production make cloud-scan CLOUD_PROVIDER=aws
 ```
 
-Use `cloud-inventory` for a non-blocking report across every severity:
-
-```bash
-SANTET_CLOUD_TARGET=production make cloud-inventory CLOUD_PROVIDER=aws
-```
-
-AWS, Azure, GCP, and Alibaba Cloud are supported. See the
+`cloud-inventory` always produces a non-blocking all-severity report;
+`cloud-scan` returns a failure when critical/high checks fail. Replace `aws`
+with `azure`, `gcp`, `alibabacloud`, or `all`. See the
 [Multi-cloud Security Guide](docs/MULTICLOUD.md) for temporary identity,
 multi-account targeting, compliance frameworks, Docker credential profiles,
 and CI safety.
@@ -119,44 +241,24 @@ You can also invoke the CLI directly:
 ```bash
 ./santet help
 ./santet kube-lint
-./santet image-scan
+IMAGE=example/app:local ./santet image-scan
 ```
 
 ### Scan a container image
+
+From a source checkout:
 
 ```bash
 docker build -t example/app:local .
 IMAGE=example/app:local make image-scan
 ```
 
-### Run Santet with Docker
-
-Build and smoke-test the local image:
+With the Docker installation:
 
 ```bash
-make docker-smoke
-SANTET_IMAGE=santet-devsecops:local ./docker/santet scan
+docker build -t example/app:local .
+IMAGE=example/app:local santet image-scan
 ```
-
-After an official release is published, use the multi-architecture GHCR image:
-
-```bash
-docker pull ghcr.io/root41d1/santet-devsecops:0.2.0
-SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.2.0 ./docker/santet scan
-```
-
-To install only the lightweight wrapper into your local path:
-
-```bash
-curl -fsSLo santet-docker \
-  https://raw.githubusercontent.com/Root41D1/santet-devsecops/v0.2.0/docker/santet
-chmod 0755 santet-docker
-install -m 0755 santet-docker "$HOME/.local/bin/santet"
-SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.2.0 santet scan
-```
-
-Inspect the downloaded wrapper before installing it. Pin both the wrapper URL
-and image to the same release version; do not use `main` for installation.
 
 The wrapper supports macOS and Linux, mounts the current project at the same
 absolute path, runs Santet as the current user, and discovers the active Unix
@@ -164,26 +266,9 @@ Docker socket. Set `SANTET_TARGET_DIR`, `SANTET_DOCKER_SOCKET`, or
 `SANTET_IMAGE` only when overriding those defaults.
 
 Docker mode supports repository scans, Kubernetes manifest linting, source
-SBOMs, and local image scans. Run KubeHound and KubeArmor cluster operations
-from the host installation because those commands require locally reviewed
-kubeconfig and dedicated cluster clients.
-
-> [!WARNING]
-> The wrapper mounts the Docker daemon socket. Access to that socket is
-> security-sensitive and is effectively equivalent to high privilege on the
-> Docker host. Run only trusted Santet images and reviewed scanner versions.
-
-Docker Compose is also supported for contributors:
-
-```bash
-export SANTET_UID="$(id -u)"
-export SANTET_GID="$(id -g)"
-export SANTET_DOCKER_GID="$(stat -c '%g' /var/run/docker.sock)" # Linux
-docker compose run --rm santet scan
-```
-
-On Docker Desktop, use `SANTET_DOCKER_GID=0`, or prefer the wrapper which
-detects the correct socket mapping automatically.
+SBOMs, local image scans, and multi-cloud assessment. Run KubeHound and
+KubeArmor cluster operations from the host installation because those commands
+require locally reviewed kubeconfig and dedicated cluster clients.
 
 ## Commands
 

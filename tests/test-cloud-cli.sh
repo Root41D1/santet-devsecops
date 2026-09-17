@@ -91,4 +91,22 @@ if "$ROOT_DIR/santet" cloud-scan unknown >/dev/null 2>&1; then
   exit 1
 fi
 
+docker_socket=
+for candidate in /var/run/docker.sock "${HOME:-}/.docker/run/docker.sock"; do
+  if [ -S "$candidate" ]; then
+    docker_socket=$candidate
+    break
+  fi
+done
+
+if [ -n "$docker_socket" ]; then
+  SANTET_DOCKER_SOCKET=$docker_socket \
+  SANTET_IMAGE=santet-test:image \
+  IMAGE=example/app:test \
+    "$ROOT_DIR/docker/santet" help
+  assert_argument "$TEST_TMP/credentials:$TEST_TMP/credentials:ro"
+  assert_argument IMAGE
+  assert_argument santet-test:image
+fi
+
 echo "ok: multi-cloud CLI safety contract"

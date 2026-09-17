@@ -4,6 +4,16 @@ All notable changes to Santet DevSecOps are documented here.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-17
+
+### Fixed
+
+- Mount the selected cloud credential directory read-only in the Docker wrapper.
+- Forward image-scan, SBOM identity, Kubernetes path, and Trivy policy variables
+  through the Docker wrapper.
+- Add step-by-step Docker, source, local-build, Compose, repository, image, and
+  multi-cloud installation instructions to the GitHub README.
+
 ## [0.2.0] - 2026-09-17
 
 ### Added

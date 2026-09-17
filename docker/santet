@@ -45,6 +45,12 @@ if [ -n "$credential_dir" ]; then
   }
 fi
 
+if [ -n "$credential_dir" ]; then
+  set -- -v "$credential_dir:$credential_dir:ro" "$image" "$@"
+else
+  set -- "$image" "$@"
+fi
+
 exec docker run --rm \
   --user "$run_uid:$run_gid" \
   --group-add "$socket_gid" \
@@ -54,6 +60,8 @@ exec docker run --rm \
   -e SANTET_TARGET_DIR="$target" \
   -e SANTET_HOST_HOME="${HOME:-}" \
   -e SANTET_DOCKER_WRAPPER=true \
+  -e IMAGE -e PROJECT_NAME -e PROJECT_VERSION -e K8S_PATHS \
+  -e TRIVY_EXIT_CODE -e TRIVY_SEVERITY \
   -e SANTET_CLOUD_CREDENTIAL_DIR \
   -e SANTET_CLOUD_TARGET -e SANTET_CLOUD_SEVERITIES \
   -e SANTET_CLOUD_REGIONS -e SANTET_CLOUD_SERVICES \
@@ -84,4 +92,4 @@ exec docker run --rm \
   -v "$socket:/var/run/docker.sock" \
   -v "$target:$target" \
   -w "$target" \
-  "$image" "$@"
+  "$@"
