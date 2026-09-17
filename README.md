@@ -1,88 +1,344 @@
-# DevSecOps Starter Kit
+# Santet DevSecOps
 
-An opinionated, stack-neutral security baseline for software repositories. It puts
-fast checks on every change, deeper checks on the default branch, and release
-provenance around deployable artifacts.
+> Free, open-source security automation for code, containers, infrastructure,
+> and Kubernetes—from pull request to runtime.
 
-## What this kit covers
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Shell: POSIX](https://img.shields.io/badge/shell-POSIX-4EAA25.svg)](scripts/santet.sh)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-security-326CE5.svg)](docs/KUBERNETES-SECURITY.md)
 
-| Risk | Control | Tool |
-|---|---|---|
-| Leaked credentials | Secret scanning | Gitleaks |
-| Vulnerable dependencies | SCA | OSV-Scanner |
-| Unsafe code patterns | SAST | Semgrep |
-| Vulnerable packages and IaC mistakes | Repository/image scan | Trivy |
-| Unknown release contents | SBOM | Syft |
-| Untrusted release artifacts | Signing/attestation hook | Cosign |
+Santet DevSecOps is an opinionated, vendor-neutral toolkit that composes proven
+open-source security tools behind one small command surface. It provides useful
+defaults, machine-readable evidence, GitHub Actions integration, and explicit
+safety controls for live-cluster operations.
 
-The tools are controls, not the operating model. Ownership, triage deadlines,
-exceptions, and evidence retention are documented in [`docs/`](docs/).
+The name is Indonesian; here it is a playful metaphor for finding hidden attack
+paths before they become real incidents.
+
+## Why Santet?
+
+- **Useful on day one:** scanners run in pinned containers; no local package
+  soup is required for repository scans.
+- **Defense across the lifecycle:** secrets, SAST, dependencies, IaC,
+  Kubernetes manifests, container images, SBOMs, attack paths, and runtime
+  enforcement.
+- **Safe cluster access:** every live-cluster command requires an exact context
+  name and an explicit read or write opt-in.
+- **Low-noise defaults:** KubeLinter uses a curated security profile instead of
+  organization-specific style rules.
+- **Reproducible evidence:** SARIF, JSON, CycloneDX, and SPDX reports are kept
+  under `artifacts/` and excluded from source control.
+- **Free and open source:** Santet is Apache-2.0 licensed and orchestrates tools
+  with their own open-source licenses.
+
+## Security coverage
+
+| Control | Tool | Stage | Output |
+|---|---|---|---|
+| Secret detection (history + files) | Gitleaks | Local + CI | SARIF |
+| Static application security testing | Semgrep | Local + CI | SARIF |
+| Dependency vulnerability analysis | OSV-Scanner | Local + CI | JSON |
+| Vulnerability, IaC, and config scanning | Trivy | Local + CI | SARIF |
+| Kubernetes manifest and Helm linting | KubeLinter | Local + CI | JSON |
+| Software bill of materials | Syft | Local + CI | CycloneDX + SPDX |
+| Kubernetes attack-path analysis | KubeHound | Controlled cluster assessment | Local graph |
+| Runtime security enforcement | KubeArmor | Kubernetes runtime | Alerts + policy enforcement |
 
 ## Quick start
 
-Prerequisites: Git, Docker, and Make.
+### Prerequisites
+
+Repository scans require:
+
+- Git
+- Docker with a running daemon
+- Make
+
+Cluster assessment additionally requires:
+
+- `kubectl`
+- Helm 3
+- KubeHound 1.6.7
+- `karmor` CLI 1.4.7
+- Docker Compose v2
+
+### Install
+
+Repository scans are containerized, so cloning Santet is enough when Git,
+Docker, and Make are already available:
 
 ```bash
-git init                    # only if this is a new repository
+git clone https://github.com/Root41D1/santet-devsecops.git
+cd santet-devsecops
 make doctor
+```
+
+For cluster features, install the exact approved versions from the official
+[KubeHound v1.6.7 release](https://github.com/DataDog/KubeHound/releases/tag/v1.6.7)
+and [karmor v1.4.7 release](https://github.com/kubearmor/kubearmor-client/releases/tag/v1.4.7),
+then run `make cluster-doctor`. On macOS, KubeHound is also available with
+`brew install kubehound`.
+
+### Run the repository baseline
+
+```bash
 make scan
 ```
 
-Reports are written to `artifacts/security/` and intentionally excluded from
-Git. To scan a built image:
+Reports are written to `artifacts/security/`.
+
+You can also invoke the CLI directly:
 
 ```bash
-IMAGE=ghcr.io/example/app:commit-sha make image-scan
+./santet help
+./santet kube-lint
+./santet image-scan
 ```
+
+### Scan a container image
+
+```bash
+docker build -t example/app:local .
+IMAGE=example/app:local make image-scan
+```
+
+### Run Santet with Docker
+
+Build and smoke-test the local image:
+
+```bash
+make docker-smoke
+SANTET_IMAGE=santet-devsecops:local ./docker/santet scan
+```
+
+After an official release is published, use the multi-architecture GHCR image:
+
+```bash
+docker pull ghcr.io/root41d1/santet-devsecops:0.1.0
+SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.1.0 ./docker/santet scan
+```
+
+To install only the lightweight wrapper into your local path:
+
+```bash
+curl -fsSLo santet-docker \
+  https://raw.githubusercontent.com/Root41D1/santet-devsecops/v0.1.0/docker/santet
+chmod 0755 santet-docker
+install -m 0755 santet-docker "$HOME/.local/bin/santet"
+SANTET_IMAGE=ghcr.io/root41d1/santet-devsecops:0.1.0 santet scan
+```
+
+Inspect the downloaded wrapper before installing it. Pin both the wrapper URL
+and image to the same release version; do not use `main` for installation.
+
+The wrapper supports macOS and Linux, mounts the current project at the same
+absolute path, runs Santet as the current user, and discovers the active Unix
+Docker socket. Set `SANTET_TARGET_DIR`, `SANTET_DOCKER_SOCKET`, or
+`SANTET_IMAGE` only when overriding those defaults.
+
+Docker mode supports repository scans, Kubernetes manifest linting, source
+SBOMs, and local image scans. Run KubeHound and KubeArmor cluster operations
+from the host installation because those commands require locally reviewed
+kubeconfig and dedicated cluster clients.
+
+> [!WARNING]
+> The wrapper mounts the Docker daemon socket. Access to that socket is
+> security-sensitive and is effectively equivalent to high privilege on the
+> Docker host. Run only trusted Santet images and reviewed scanner versions.
+
+Docker Compose is also supported for contributors:
+
+```bash
+export SANTET_UID="$(id -u)"
+export SANTET_GID="$(id -g)"
+export SANTET_DOCKER_GID="$(stat -c '%g' /var/run/docker.sock)" # Linux
+docker compose run --rm santet scan
+```
+
+On Docker Desktop, use `SANTET_DOCKER_GID=0`, or prefer the wrapper which
+detects the correct socket mapping automatically.
 
 ## Commands
 
 ```text
-make doctor       Check local prerequisites
-make secrets      Scan Git history and working tree for secrets
-make sast         Run static analysis
-make dependencies Scan lockfiles and manifests for known vulnerabilities
-make filesystem   Scan source, dependencies, secrets, and IaC
-make sbom         Generate CycloneDX and SPDX SBOMs
-make scan         Run the pull-request security baseline
-make image-scan   Scan IMAGE and generate its SBOM
-make clean        Remove generated security reports
+make doctor                   Check repository-scan prerequisites
+make secrets                  Scan Git history and files for secrets
+make sast                     Run static application security testing
+make dependencies             Scan dependency manifests and lockfiles
+make filesystem               Scan source, IaC, config, and vulnerabilities
+make kube-lint                Lint Kubernetes manifests and Helm charts
+make sbom                     Generate CycloneDX and SPDX SBOMs
+make scan                     Run the complete pull-request baseline
+make image-scan               Scan IMAGE and generate its SBOM
+make docker-build             Build the local Santet container image
+make docker-smoke             Build and smoke-test Docker distribution
+make cluster-doctor           Check Kubernetes tools, versions, and context
+make kubearmor-render         Render the pinned KubeArmor chart locally
+make kubearmor-install        Install KubeArmor into the confirmed context
+make kubearmor-status         Show KubeArmor runtime health
+make kubearmor-probe          Verify actual runtime-enforcement support
+make kubearmor-policy-check   Server-side dry-run the audit policy
+make kubearmor-policy-apply   Apply the audit-only runtime policy
+make kubehound                Build and open a local attack graph
+make kubehound-dump           Create a sensitive offline cluster dump
+make clean                    Remove generated security reports
 ```
 
-## CI setup
+Set `PROJECT_NAME` and `PROJECT_VERSION` when you want explicit source identity
+inside generated SBOMs; otherwise Santet uses the directory name and Git SHA.
 
-The GitHub Actions workflow in `.github/workflows/devsecops.yml` runs on pull
-requests, pushes to the default branch, and manual dispatches. Before enforcing
-it:
+## Kubernetes safety model
 
-1. Replace the example build/test hook with the application's real commands.
-2. Protect the default branch and require the `security / baseline` check.
-3. Configure dependency updates and GitHub secret scanning where available.
-4. Set `IMAGE` in CI only after an image build is added.
-5. Review severity thresholds in `.devsecops/policy.env`.
-6. Have Dependabot replace major action tags with reviewed updates, or pin action
-   commits according to your organization's supply-chain policy.
+Santet refuses live-cluster operations unless the active context exactly matches
+`SANTET_CONTEXT`.
 
-Start in audit mode for one or two weeks, resolve the baseline, then make the
-gates blocking. Do not permanently suppress findings just to turn CI green.
+Read-only assessment:
 
-## Repository map
+```bash
+kubectl config current-context
+SANTET_CONTEXT=my-dev-cluster ALLOW_CLUSTER_READ=true make kubearmor-probe
+SANTET_CONTEXT=my-dev-cluster ALLOW_CLUSTER_READ=true make kubehound
+```
+
+Cluster-changing operation:
+
+```bash
+kubectl config current-context
+make kubearmor-render
+SANTET_CONTEXT=my-dev-cluster ALLOW_CLUSTER_WRITE=true make kubearmor-install
+SANTET_CONTEXT=my-dev-cluster ALLOW_CLUSTER_WRITE=true make kubearmor-policy-apply
+```
+
+Never set these flags globally in a shell profile or CI secret. Supply them only
+for the command being reviewed.
+
+### KubeArmor rollout
+
+The included operator chart and every KubeArmor component are pinned to version
+1.7.1. Runtime posture and the example policy begin in `Audit` mode. A safe
+production rollout is:
+
+1. Render and review RBAC and DaemonSet privileges with `make kubearmor-render`.
+2. Install into a non-production cluster.
+3. Run `make kubearmor-probe` and confirm an actual LSM enforcer is available.
+4. Apply the audit policy and label only a canary workload with
+   `santet.devsecops/profile=hardened`.
+5. Exercise expected workload behavior and inspect `karmor logs`.
+6. Promote narrow, proven rules from `Audit` to `Block` through code review.
+
+Installing the operator does not guarantee enforcement; kernel and node support
+must be confirmed by the probe. Santet rejects KubeArmor installation on Docker
+Desktop/LinuxKit because KubeArmor requires Linux kernel security modules that
+are not exposed by Docker Desktop on macOS or Windows. Use a supported Linux
+cluster such as a compatible kubeadm, k3s, GKE, AKS, or EKS environment.
+
+### KubeHound profile
+
+Santet uses a checked-in KubeHound configuration with:
+
+- interactive context confirmation;
+- 100 Kubernetes API requests/second;
+- page size 500 and a ten-page buffer;
+- bounded graph writer concurrency;
+- clean logical ingestion to avoid stale paths; and
+- telemetry disabled.
+
+For very large clusters, tune API rate and writer concurrency gradually while
+watching API-server throttling, backend health, memory, and disk. A large local
+graph can require several gigabytes.
+
+KubeHound dumps contain sensitive topology and RBAC information. They are
+excluded from Git and must be handled as security evidence.
+
+## GitHub Actions
+
+The workflow at `.github/workflows/santet-devsecops.yml` runs the baseline on
+pull requests, pushes to `main`, and manual dispatches. It uploads evidence for
+30 days and publishes SARIF to GitHub code scanning when available.
+
+Before enabling branch protection:
+
+1. Run the workflow and resolve any repository-specific baseline findings.
+2. Require the `Santet DevSecOps / baseline` check on the default branch.
+3. Add your application build and test workflow as a separate required check.
+4. Review `.santet/policy.env` and `.kube-linter.yaml` through pull requests.
+5. Keep kubeconfig and cluster credentials out of pull-request workflows.
+
+Live KubeHound and KubeArmor operations are intentionally not part of PR CI.
+
+## Configuration
+
+| Path | Purpose |
+|---|---|
+| `.santet/policy.env` | Approved versions and severity thresholds |
+| `.santet/kubehound.yaml` | KubeHound collection and graph-performance profile |
+| `.santet/.gitleaks.toml` | Secret-scanning policy |
+| `.kube-linter.yaml` | Curated Kubernetes security checks |
+| `.semgrep.yml` | Repository-specific static-analysis rules |
+| `Dockerfile` | Reproducible, non-root Santet distribution image |
+| `docker/santet` | macOS/Linux Docker wrapper |
+| `compose.yaml` | Contributor-oriented Docker Compose runner |
+| `kubernetes/kubearmor/values.yaml` | Pinned KubeArmor operator deployment |
+| `kubernetes/kubearmor/config.yaml` | Audit-first runtime and pinned engine images |
+| `kubernetes/kubearmor/audit-sensitive-runtime.yaml` | Audit-first runtime policy |
+
+To scan manifests outside the conventional directories:
+
+```bash
+K8S_PATHS="platform/base platform/overlays/prod" make kube-lint
+```
+
+## Architecture
 
 ```text
-.devsecops/                 Security policy and scanner configuration
-.github/workflows/          CI security gates
-docs/                       Operating guide, threat model, exceptions, response
-scripts/devsecops.sh        Reproducible local/CI command runner
-Makefile                    Developer-friendly entry points
+Developer / CI
+      |
+      v
+  ./santet ---------------------> artifacts/security/
+      |                                  |
+      +-- source and dependency scans    +-- SARIF / JSON
+      +-- Kubernetes lint                +-- CycloneDX / SPDX
+      +-- image scan
+      |
+      +-- explicit context gate --> Kubernetes API
+                                      |          |
+                                      v          v
+                                  KubeHound   KubeArmor
+                                  attack graph runtime audit/block
 ```
 
-## Security principles
+See [Architecture](docs/ARCHITECTURE.md),
+[Kubernetes Security](docs/KUBERNETES-SECURITY.md), and the
+[Operating Guide](docs/OPERATING-GUIDE.md) for deeper guidance. Maintainers can
+use the [Publishing Guide](docs/PUBLISHING.md) for the first GitHub release.
 
-- Prevent secrets from reaching Git; rotate them if they do.
-- Fail on exploitable high/critical findings, with a time-bound exception path.
-- Build once, promote the same immutable artifact, and retain its SBOM.
-- Use short-lived workload identity instead of long-lived deployment keys.
-- Keep CI permissions minimal and pin third-party automation before production.
-- Treat scanner output as untrusted data; never execute content from reports.
+## Design principles
 
-See [the operating guide](docs/OPERATING-GUIDE.md) for implementation details.
+- Build once and promote immutable artifacts.
+- Prefer short-lived identity over stored deployment credentials.
+- Pin automation and scanner versions; review upgrades.
+- Block new high-confidence risk while giving legacy findings owners and dates.
+- Use severity together with reachability, exposure, exploitability, and blast
+  radius.
+- Start runtime controls in audit mode and enforce only observed, tested rules.
+- Never treat scanner output as executable input.
+
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md), open an issue,
+and keep changes small, testable, and documented. Security vulnerabilities must
+follow [SECURITY.md](SECURITY.md), not public issues.
+
+## Project status
+
+Santet DevSecOps is an early-stage community toolkit. Review every policy against
+your threat model, platform, and compliance obligations before production use.
+It does not replace security engineering judgment, penetration testing, or an
+incident-response program.
+
+## License and upstream projects
+
+Santet DevSecOps is licensed under [Apache License 2.0](LICENSE). Gitleaks,
+Semgrep, OSV-Scanner, Trivy, Syft, KubeLinter, KubeHound, and KubeArmor are
+independent upstream projects governed by their own licenses and maintainers.
+Santet is not an official distribution of those projects.

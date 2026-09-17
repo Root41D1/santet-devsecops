@@ -1,0 +1,24 @@
+name: Feature request
+description: Propose a focused improvement to Santet DevSecOps
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Security or operational problem
+      description: Describe the user problem, not only a preferred implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Security, compatibility, and performance tradeoffs
+    validations:
+      required: true

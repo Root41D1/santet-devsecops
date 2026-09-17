@@ -1,0 +1,12 @@
+title = "Santet DevSecOps secret-scanning policy"
+
+[extend]
+useDefault = true
+
+# Add narrowly scoped allowlists only for verified test fixtures. Every entry
+# should reference an approved, expiring security exception. The only public
+# baseline exclusion is Santet's generated evidence directory.
+
+[[allowlists]]
+description = "Generated security evidence"
+paths = ['''(^|/)artifacts/''']

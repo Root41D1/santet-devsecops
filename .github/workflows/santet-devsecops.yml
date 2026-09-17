@@ -1,4 +1,4 @@
-name: security
+name: Santet DevSecOps
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: security-${{ github.ref }}
+  group: santet-security-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -24,14 +24,21 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Application tests
+      - name: Validate Santet CLI
         run: |
-          echo "Replace this step with the repository's build, lint, and test commands."
+          sh -n scripts/santet.sh
+          sh -n santet
+          test -x santet
+          test -x scripts/santet.sh
+          make help
+
+      - name: Build and smoke-test Santet container
+        run: make docker-smoke
 
       - name: Secret scan
         if: always()
@@ -49,36 +56,47 @@ jobs:
         if: always()
         run: make filesystem
 
+      - name: Kubernetes manifest scan
+        if: always()
+        run: make kube-lint
+
       - name: Generate source SBOM
         if: always()
         run: make sbom
 
       - name: Upload evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: security-evidence-${{ github.run_id }}
           path: artifacts/security/
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Publish Gitleaks SARIF
-        if: always() && hashFiles('artifacts/security/gitleaks.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Publish Gitleaks history SARIF
+        if: always() && hashFiles('artifacts/security/gitleaks-history.sarif') != ''
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
         with:
-          sarif_file: artifacts/security/gitleaks.sarif
-          category: gitleaks
+          sarif_file: artifacts/security/gitleaks-history.sarif
+          category: gitleaks-history
+
+      - name: Publish Gitleaks working-tree SARIF
+        if: always() && hashFiles('artifacts/security/gitleaks-files.sarif') != ''
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
+        with:
+          sarif_file: artifacts/security/gitleaks-files.sarif
+          category: gitleaks-files
 
       - name: Publish Semgrep SARIF
         if: always() && hashFiles('artifacts/security/semgrep.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
         with:
           sarif_file: artifacts/security/semgrep.sarif
           category: semgrep
 
       - name: Publish Trivy SARIF
         if: always() && hashFiles('artifacts/security/trivy-filesystem.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
         with:
           sarif_file: artifacts/security/trivy-filesystem.sarif
           category: trivy-filesystem

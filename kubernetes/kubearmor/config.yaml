@@ -1,0 +1,34 @@
+apiVersion: operator.kubearmor.com/v1
+kind: KubeArmorConfig
+metadata:
+  name: kubearmorconfig-default
+  namespace: kubearmor
+  labels:
+    app.kubernetes.io/name: kubearmorconfig
+    app.kubernetes.io/part-of: santet-devsecops
+    app.kubernetes.io/managed-by: santet-devsecops
+spec:
+  alertThrottling: true
+  defaultCapabilitiesPosture: audit
+  defaultFilePosture: audit
+  defaultNetworkPosture: audit
+  defaultVisibility: process,network
+  enableStdOutAlerts: false
+  enableStdOutLogs: false
+  enableStdOutMsgs: false
+  matchArgs: true
+  maxAlertPerSec: 10
+  seccompEnabled: false
+  throttleSec: 30
+  kubearmorImage:
+    image: kubearmor/kubearmor:v1.7.1
+    imagePullPolicy: IfNotPresent
+  kubearmorInitImage:
+    image: kubearmor/kubearmor-init:v1.7.1
+    imagePullPolicy: IfNotPresent
+  kubearmorControllerImage:
+    image: kubearmor/kubearmor-controller:v1.7.1
+    imagePullPolicy: IfNotPresent
+  kubearmorRelayImage:
+    image: kubearmor/kubearmor-relay-server:v1.7.1
+    imagePullPolicy: IfNotPresent

@@ -1,34 +1,73 @@
 SHELL := /bin/sh
 
-.PHONY: help doctor secrets sast dependencies filesystem sbom scan image-scan clean
+.PHONY: help doctor secrets sast dependencies filesystem sbom kube-lint scan image-scan \
+	docker-build docker-smoke \
+	cluster-doctor kubearmor-probe kubearmor-policy-check kubearmor-render \
+	kubearmor-install kubearmor-status kubearmor-policy-apply kubehound kubehound-dump clean
 
 help:
-	@./scripts/devsecops.sh help
+	@./santet help
 
 doctor:
-	@./scripts/devsecops.sh doctor
+	@./santet doctor
 
 secrets:
-	@./scripts/devsecops.sh secrets
+	@./santet secrets
 
 sast:
-	@./scripts/devsecops.sh sast
+	@./santet sast
 
 dependencies:
-	@./scripts/devsecops.sh dependencies
+	@./santet dependencies
 
 filesystem:
-	@./scripts/devsecops.sh filesystem
+	@./santet filesystem
 
 sbom:
-	@./scripts/devsecops.sh sbom
+	@./santet sbom
+
+kube-lint:
+	@./santet kube-lint
 
 scan:
-	@./scripts/devsecops.sh scan
+	@./santet scan
 
 image-scan:
-	@./scripts/devsecops.sh image-scan
+	@./santet image-scan
+
+docker-build:
+	@docker build --tag santet-devsecops:local .
+
+docker-smoke: docker-build
+	@SANTET_IMAGE=santet-devsecops:local ./docker/santet help
+	@SANTET_IMAGE=santet-devsecops:local ./docker/santet doctor
+
+cluster-doctor:
+	@./santet cluster-doctor
+
+kubearmor-probe:
+	@./santet kubearmor-probe
+
+kubearmor-policy-check:
+	@./santet kubearmor-policy-check
+
+kubearmor-render:
+	@./santet kubearmor-render
+
+kubearmor-install:
+	@./santet kubearmor-install
+
+kubearmor-status:
+	@./santet kubearmor-status
+
+kubearmor-policy-apply:
+	@./santet kubearmor-policy-apply
+
+kubehound:
+	@./santet kubehound
+
+kubehound-dump:
+	@./santet kubehound-dump
 
 clean:
-	@./scripts/devsecops.sh clean
-
+	@./santet clean

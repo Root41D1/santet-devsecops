@@ -1,0 +1,34 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorClusterPolicy
+metadata:
+  annotations:
+    santet.devsecops/promotion: "Change Audit to Block only after workload testing"
+  name: audit-sensitive-runtime-actions
+spec:
+  action: Audit
+  file:
+    matchDirectories:
+      - dir: /run/secrets/kubernetes.io/serviceaccount/
+        recursive: true
+  process:
+    matchPaths:
+      - path: /usr/bin/apt
+      - path: /usr/bin/apt-get
+      - path: /usr/bin/dpkg
+      - path: /usr/bin/curl
+      - path: /usr/bin/wget
+      - path: /usr/local/bin/kubectl
+      - path: /usr/bin/kubectl
+      - path: /usr/bin/docker
+      - path: /usr/bin/crictl
+  message: Sensitive credential access or administrative tool execution observed
+  severity: 7
+  selector:
+    matchExpressions:
+      - key: label
+        operator: In
+        values:
+          - santet.devsecops/profile=hardened
+  tags:
+    - MITRE_T1552_unsecured_credentials
+    - MITRE_T1609_container_administration_command

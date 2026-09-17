@@ -1,18 +1,18 @@
-# Security Policy
+# Santet DevSecOps Security Policy
 
 ## Reporting a vulnerability
 
-Do not open a public issue for a suspected vulnerability. Report it through the
-organization's private security channel and include:
+Do not open a public issue for a suspected vulnerability. Use GitHub private
+vulnerability reporting for this repository and include:
 
 - the affected component and version or commit;
 - reproduction steps or a minimal proof of concept;
 - potential impact and required preconditions; and
 - any suggested mitigation.
 
-Replace this paragraph with the organization's monitored security email address
-or private vulnerability-reporting URL before publishing the repository. Never
-send live credentials, personal data, or destructive payloads by email.
+Never submit live credentials, kubeconfigs, personal data, production cluster
+dumps, or destructive payloads. Redact proof-of-concept output to the minimum
+needed to reproduce the issue.
 
 ## Response targets
 
@@ -22,7 +22,6 @@ available. These are targets, not promises of eligibility or payment.
 
 ## Supported versions
 
-Only the latest production release is supported unless the release policy states
-otherwise. Record supported branches and end-of-support dates here when the first
-release is made.
-
+Until version 1.0, only the latest tagged release is supported. Pinning an older
+scanner version may leave known issues unresolved; upgrade through a reviewed
+pull request.

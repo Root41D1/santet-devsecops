@@ -1,0 +1,41 @@
+---
+debug: false
+collector:
+  type: live-k8s-api-collector
+  live:
+    # A balanced profile for most clusters. Raise this gradually only after
+    # observing API server throttling and KubeHound backend health.
+    page_size: 500
+    page_buffer_size: 10
+    rate_limit_per_second: 100
+  non_interactive: false
+mongodb:
+  url: mongodb://localhost:27017
+  connection_timeout: 30s
+  wipe: false
+janusgraph:
+  url: ws://localhost:8182/gremlin
+  connection_timeout: 30s
+  writer_worker_count: 10
+storage:
+  retry: 10
+  retry_delay: 10s
+  # Each run starts from a clean logical graph to avoid stale attack paths.
+  wipe: true
+telemetry:
+  enabled: false
+builder:
+  vertex:
+    batch_size: 250
+    batch_size_small: 50
+  edge:
+    large_cluster_optimizations: true
+    worker_pool_size: 5
+    worker_pool_capacity: 100
+    batch_size: 250
+    batch_size_small: 50
+    batch_size_cluster_impact: 10
+ingestor:
+  temp_dir: /tmp/kubehound
+  archive_name: archive.tar.gz
+  max_archive_size: 2147483648

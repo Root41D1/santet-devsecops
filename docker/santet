@@ -1,0 +1,47 @@
+#!/bin/sh
+set -eu
+
+image=${SANTET_IMAGE:-santet-devsecops:local}
+target=${SANTET_TARGET_DIR:-$PWD}
+
+target=$(CDPATH= cd -- "$target" && pwd)
+
+socket=${SANTET_DOCKER_SOCKET:-}
+if [ -z "$socket" ]; then
+  if [ -S /var/run/docker.sock ]; then
+    socket=/var/run/docker.sock
+  else
+    endpoint=$(docker context inspect --format '{{.Endpoints.docker.Host}}' 2>/dev/null || true)
+    case "$endpoint" in
+      unix://*) socket=${endpoint#unix://} ;;
+      *) socket=/var/run/docker.sock ;;
+    esac
+  fi
+fi
+
+if [ ! -S "$socket" ]; then
+  echo "Docker socket not found: $socket" >&2
+  echo "Set SANTET_DOCKER_SOCKET to the active Unix socket." >&2
+  exit 2
+fi
+
+run_uid=$(id -u)
+run_gid=$(id -g)
+socket_gid=$(stat -Lc '%g' "$socket" 2>/dev/null || stat -L -f '%g' "$socket")
+daemon_os=$(docker info --format '{{.OperatingSystem}}' 2>/dev/null || true)
+case "$daemon_os" in
+  *Docker\ Desktop*) socket_gid=0 ;;
+esac
+
+exec docker run --rm \
+  --user "$run_uid:$run_gid" \
+  --group-add "$socket_gid" \
+  --security-opt=no-new-privileges \
+  --cap-drop=ALL \
+  -e HOME=/tmp \
+  -e SANTET_TARGET_DIR="$target" \
+  -e DOCKER_HOST=unix:///var/run/docker.sock \
+  -v "$socket:/var/run/docker.sock" \
+  -v "$target:$target" \
+  -w "$target" \
+  "$image" "$@"

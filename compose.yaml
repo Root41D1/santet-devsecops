@@ -1,0 +1,24 @@
+name: santet-devsecops
+
+services:
+  santet:
+    image: ${SANTET_IMAGE:-santet-devsecops:local}
+    build:
+      context: .
+      args:
+        SANTET_VERSION: ${SANTET_VERSION:-0.1.0}
+    working_dir: /workspace
+    user: ${SANTET_UID:-65532}:${SANTET_GID:-65532}
+    group_add:
+      - ${SANTET_DOCKER_GID:-0}
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      HOME: /tmp
+      SANTET_TARGET_DIR: /workspace
+    volumes:
+      - ${SANTET_TARGET_DIR:-.}:/workspace
+      - ${SANTET_DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

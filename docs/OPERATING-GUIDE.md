@@ -1,4 +1,4 @@
-# DevSecOps Operating Guide
+# Santet DevSecOps Operating Guide
 
 ## 1. Security lifecycle
 
@@ -55,10 +55,15 @@
 | SAST | Yes | Yes | New high-confidence error |
 | Dependency scan | Yes | Yes | Fixable high/critical risk violates policy |
 | IaC/config scan | Yes | Yes | High/critical production exposure |
+| Kubernetes lint | If Kubernetes exists | Yes | Invalid or unsafe manifest/chart |
 | SBOM | Optional | Required | Missing or malformed for release |
 | Image scan | If built | Required | Policy threshold exceeded |
 | Signature/provenance | No | Required | Missing or unverifiable |
 | DAST | Preview/staging | Required for exposed apps | Confirmed high/critical issue |
+
+Live-cluster controls are deliberately separate from pull-request CI. Run
+KubeHound on a scheduled assessment cadence and continuously operate KubeArmor
+with audit-first, canary-tested enforcement. See `docs/KUBERNETES-SECURITY.md`.
 
 Apply gates to new findings first. Baseline legacy findings with owners and due
 dates instead of hiding them.

@@ -1,5 +1,5 @@
-artifacts/security/
+artifacts/
+.DS_Store
 .env
 .env.*
 !.env.example
-

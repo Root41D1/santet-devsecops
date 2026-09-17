@@ -1,0 +1,43 @@
+name: Bug report
+description: Report reproducible incorrect behavior in Santet DevSecOps
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include secrets, kubeconfigs, cluster dumps, or private vulnerability details.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide minimal, sanitized steps and command output.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Santet version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, architecture, Docker, Kubernetes, and relevant tool versions.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed credentials, tokens, kubeconfigs, personal data, and sensitive cluster information.
+          required: true

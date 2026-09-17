@@ -1,0 +1,32 @@
+checks:
+  # Curated security and production-readiness profile. It avoids organization-
+  # specific style checks so the public default remains useful with low noise.
+  doNotAutoAddDefaults: true
+  include:
+    - access-to-create-pods
+    - access-to-secrets
+    - cluster-admin-role-binding
+    - default-service-account
+    - docker-sock
+    - drop-net-raw-capability
+    - env-var-secret
+    - exposed-services
+    - host-ipc
+    - host-network
+    - host-pid
+    - latest-tag
+    - no-read-only-root-fs
+    - non-isolated-pod
+    - privilege-escalation-container
+    - privileged-container
+    - read-secret-from-env-var
+    - run-as-non-root
+    - sensitive-host-mounts
+    - unsafe-proc-mount
+    - unsafe-sysctls
+    - wildcard-in-rules
+    - writable-host-mount
+  ignorePaths:
+    - artifacts/**
+    - vendor/**
+    - node_modules/**

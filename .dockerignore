@@ -1,0 +1,11 @@
+.git
+.github
+artifacts
+.DS_Store
+.env
+.env.*
+docs
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md

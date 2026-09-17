@@ -1,0 +1,37 @@
+# Santet DevSecOps KubeArmor operator profile.
+# The operator and its helper image are pinned here. The KubeArmorConfig is
+# applied separately so upgrades never create a second, conflicting config.
+autoDeploy: false
+imagePinning: true
+
+kubearmor:
+  repo: kubearmor
+  images:
+    kubearmor:
+      image: kubearmor
+      tag: v1.7.1
+    kubearmorController:
+      image: kubearmor-controller
+      tag: v1.7.1
+    kubearmorInit:
+      image: kubearmor-init
+      tag: v1.7.1
+    kubearmorOperator:
+      image: kubearmor-operator
+      tag: v1.7.1
+    kubearmorRelay:
+      image: kubearmor-relay-server
+      tag: v1.7.1
+    kubearmorSnitch:
+      image: kubearmor-snitch
+      tag: v1.7.1
+
+kubearmorOperator:
+  imagePullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 64Mi
