@@ -78,28 +78,28 @@ jobs:
 
       - name: Publish Gitleaks history SARIF
         if: always() && hashFiles('artifacts/security/gitleaks-history.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4
         with:
           sarif_file: artifacts/security/gitleaks-history.sarif
           category: gitleaks-history
 
       - name: Publish Gitleaks working-tree SARIF
         if: always() && hashFiles('artifacts/security/gitleaks-files.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4
         with:
           sarif_file: artifacts/security/gitleaks-files.sarif
           category: gitleaks-files
 
       - name: Publish Semgrep SARIF
         if: always() && hashFiles('artifacts/security/semgrep.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4
         with:
           sarif_file: artifacts/security/semgrep.sarif
           category: semgrep
 
       - name: Publish Trivy SARIF
         if: always() && hashFiles('artifacts/security/trivy-filesystem.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4
         with:
           sarif_file: artifacts/security/trivy-filesystem.sarif
           category: trivy-filesystem
